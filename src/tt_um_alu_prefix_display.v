@@ -1,43 +1,44 @@
 module tt_um_alu_prefix_display (
-    input  [7:0] io_in,
-    output [15:0] io_out,
-    input        clk
+    input  [7:0]  io_in,   // ui[7:0] → A[7:0]
+    output [7:0]  io_out,  // uo[7:0] → LED[7:0]
+    inout  [7:0]  io_oeb   // uio[7:0]
 );
 
-    wire [7:0] sw  = io_in[7:0];
-    wire [4:0] sw2 = io_in[12:8];
-    wire [2:0] sel = io_in[15:13];
-    wire       btnC = io_in[16];
+    // Entradas
+    wire [7:0] A        = io_in;
+    wire       Cin      = io_oeb[0];            // Carry In
+    wire [2:0] sel      = io_oeb[3:1];          // Select[2:0]
 
-    wire [7:0] led;
-    wire       led8;
-    wire [6:0] seg;
-    wire [3:0] an;
+    // Salidas
+    wire [7:0] R;                                // ALU result
+    wire       Cout;                             // Carry Out
 
+    // Salida del display (uso de 3 bits de uio para ejemplo)
+    wire [2:0] seg3bit;
+    assign seg3bit = R[2:0]; // Opcional: mostrar parte del resultado en segmentos
+
+    // Instancias
     ALU alu_inst (
-        .A    (sw),
-        .B    ({3'b000, sw2}),
+        .A    (A),
+        .B    (8'd5),       // puedes conectar una constante o extender otra entrada
         .sel  (sel),
-        .R    (led)
+        .R    (R)
     );
 
     Prefix prefix_inst (
-        .A    (sw),
-        .B    ({3'b000, sw2}),
-        .Cin  (btnC),
-        .SUM  (),
-        .Cout (led8)
+        .A    (A),
+        .B    (8'd5),
+        .Cin  (Cin),
+        .SUM  (),           // sin uso por ahora
+        .Cout (Cout)
     );
 
-    DisplayController display (
-        .clk   (clk),
-        .value (led),
-        .seg   (seg),
-        .an    (an)
-    );
+    // Salidas
+    assign io_out = R;
 
-    assign io_out[7:0]   = led;
-    assign io_out[8]     = led8;
-    assign io_out[15:9]  = seg;
+    // Bidireccionales (uio): aquí puedes emular salida si deseas
+    assign io_oeb[7] = ~Cout;            // uio[7] = Carry Out (as output)
+    assign io_oeb[6:4] = ~seg3bit;       // uio[4-6] = segmento (opcional)
+    assign io_oeb[3:0] = 4'b1111;        // uio[3:0] como entradas (alta impedancia)
 
 endmodule
