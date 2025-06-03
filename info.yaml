@@ -42,4 +42,4 @@ pinout:
   uio[6]: "Display Segment[2]"
   uio[7]: "Carry Out"
 
-yaml_version: 6
+yaml_version: 6
